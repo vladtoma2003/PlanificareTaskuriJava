@@ -40,16 +40,16 @@ public class MyDispatcher extends Dispatcher {
                 hosts.get(2).addTask(task);
             }
         }  else if(algorithm == SchedulingAlgorithm.LEAST_WORK_LEFT) {
-            int min = Integer.MAX_VALUE;
+            long min = Long.MAX_VALUE;
             int index = 0;
             for(int i = 0; i < hosts.size(); i++) {
-                if(hosts.get(i).getWorkLeft()/1000 < min) {
-                    min = (int) hosts.get(i).getWorkLeft()/1000; // convert to seconds
+                if(min - hosts.get(i).getWorkLeft() > 950) { // at least one second difference
+                    min = hosts.get(i).getWorkLeft() ; // convert to seconds
                     index = i;
                 }
-//                System.out.println("Host " + hosts.get(i).getName() + " has work left " + hosts.get(i).getWorkLeft()/1000);
+                System.out.println("Host " + hosts.get(i).getName() + " has work left " + hosts.get(i).getWorkLeft());
             }
-//            System.out.println("Task " + task.getId() + " added to host " + hosts.get(index).getName() + " at " + Timer.getTimeDouble() + " with work left " + hosts.get(index).getWorkLeft());
+            System.out.println("Task " + task.getId() + " added to host " + hosts.get(index).getName() + " at " + Timer.getTimeDouble() + " with work left " + hosts.get(index).getWorkLeft());
             hosts.get(index).addTask(task);
         }
         mutex.release();
