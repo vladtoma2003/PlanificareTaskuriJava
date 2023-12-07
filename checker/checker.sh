@@ -5,7 +5,10 @@ correct=0
 echo "VMCHECKER_TRACE_CLEANUP"
 date
 
-cd ../src
+#pwd > checker_path.txt
+
+#cd ../src
+cd src
 rm -rf *.class
 
 cp ../checker/skeleton/*.java .

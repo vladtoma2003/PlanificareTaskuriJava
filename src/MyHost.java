@@ -1,12 +1,51 @@
 /* Implement this class. */
 
-import java.util.Comparator;
-import java.util.PriorityQueue;
+import java.time.ZonedDateTime;
+import java.util.concurrent.PriorityBlockingQueue;
 
 public class MyHost extends Host {
-    PriorityQueue<Task> queue = new PriorityQueue<>(Comparator.comparing(Task::getPriority).thenComparing(Task::getStart));
+    PriorityBlockingQueue<Task> queue = new PriorityBlockingQueue<>(10, (o1, o2) -> {
+                if(o1.getPriority() == o2.getPriority()) {
+                    if(o1.getStart() == o2.getStart()) {
+                        return o1.getId() - o2.getId();
+                    } else {
+                        return o1.getStart() - o2.getStart();
+                    }
+                } else {
+                    return o2.getPriority() - o1.getPriority();
+                }
+            });
+    Task task = null;
+    boolean isRunning = true;
     @Override
     public void run() {
+        while(isRunning) { // always run
+
+            // Pick which task to run
+            if(!queue.isEmpty()) {
+                task = queue.poll();
+            }
+
+            // Run the task
+            if(task != null) {
+                long start = ZonedDateTime.now().toInstant().toEpochMilli();
+                    while (task.getLeft() > 0) {
+                        if (task.isPreemptible() && queue.peek() != null && queue.peek().getPriority() > task.getPriority()) {
+                            queue.add(task);
+                            task = null;
+                            break;
+                        }
+                        long current = ZonedDateTime.now().toInstant().toEpochMilli();
+                        task.setLeft(task.getLeft() - (current - start));
+                        start = current;
+                    }
+                    if(task != null) {
+                        System.out.println("Task " + task.getId() + " finished at " + Timer.getTimeDouble() + " with priority " + task.getPriority());
+                        task.finish();
+                        task = null;
+                    }
+            }
+        }
     }
 
     @Override
@@ -16,7 +55,7 @@ public class MyHost extends Host {
 
     @Override
     public int getQueueSize() {
-        return queue.size();
+        return (queue.size() + (task != null ? 1 : 0));
     }
 
     @Override
@@ -25,10 +64,12 @@ public class MyHost extends Host {
         for(Task task : queue) {
             workLeft += task.getLeft();
         }
-        return workLeft;
+        return (workLeft + (task != null ? task.getLeft() : 0));
     }
 
     @Override
     public void shutdown() {
+        queue.clear();
+        isRunning = false;
     }
 }

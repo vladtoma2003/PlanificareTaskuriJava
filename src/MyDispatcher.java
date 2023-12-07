@@ -1,17 +1,26 @@
 /* Implement this class. */
 
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 public class MyDispatcher extends Dispatcher {
-
+    int taskNo = 0;
+    Semaphore mutex = new Semaphore(1);
     public MyDispatcher(SchedulingAlgorithm algorithm, List<Host> hosts) {
         super(algorithm, hosts);
     }
 
     @Override
     public void addTask(Task task) {
+        try {
+            mutex.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         if(algorithm == SchedulingAlgorithm.ROUND_ROBIN) {
-            hosts.get(task.getId()%hosts.size()).addTask(task);
+            hosts.get(taskNo%hosts.size()).addTask(task);
+            ++taskNo;
         } else if(algorithm == SchedulingAlgorithm.SHORTEST_QUEUE) {
             int min = Integer.MAX_VALUE;
             int index = 0;
@@ -34,12 +43,15 @@ public class MyDispatcher extends Dispatcher {
             int min = Integer.MAX_VALUE;
             int index = 0;
             for(int i = 0; i < hosts.size(); i++) {
-                if(hosts.get(i).getWorkLeft() < min) {
-                    min = (int) hosts.get(i).getWorkLeft();
+                if(hosts.get(i).getWorkLeft()/1000 < min) {
+                    min = (int) hosts.get(i).getWorkLeft()/1000; // convert to seconds
                     index = i;
                 }
+//                System.out.println("Host " + hosts.get(i).getName() + " has work left " + hosts.get(i).getWorkLeft()/1000);
             }
+//            System.out.println("Task " + task.getId() + " added to host " + hosts.get(index).getName() + " at " + Timer.getTimeDouble() + " with work left " + hosts.get(index).getWorkLeft());
             hosts.get(index).addTask(task);
         }
+        mutex.release();
     }
 }
