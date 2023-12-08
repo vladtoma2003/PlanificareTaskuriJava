@@ -47,9 +47,7 @@ public class MyDispatcher extends Dispatcher {
                     min = hosts.get(i).getWorkLeft() ; // convert to seconds
                     index = i;
                 }
-                System.out.println("Host " + hosts.get(i).getName() + " has work left " + hosts.get(i).getWorkLeft());
             }
-            System.out.println("Task " + task.getId() + " added to host " + hosts.get(index).getName() + " at " + Timer.getTimeDouble() + " with work left " + hosts.get(index).getWorkLeft());
             hosts.get(index).addTask(task);
         }
         mutex.release();

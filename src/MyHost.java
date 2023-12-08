@@ -17,7 +17,6 @@ public class MyHost extends Host {
             });
     Task task = null;
     boolean isRunning = true;
-    long lostTime = 0;
     @Override
     public void run() {
         while(isRunning) { // always run
@@ -31,19 +30,18 @@ public class MyHost extends Host {
             if(task != null) {
                 long start = ZonedDateTime.now().toInstant().toEpochMilli();
                 while (task.getLeft() > 0) {
+                    // Check if task is preempted
                     if (task.isPreemptible() && queue.peek() != null && queue.peek().getPriority() > task.getPriority()) {
                         queue.add(task);
                         task = null;
-                        lostTime += (ZonedDateTime.now().toInstant().toEpochMilli() - start);
                         break;
                     }
                     long current = ZonedDateTime.now().toInstant().toEpochMilli();
                     task.setLeft(task.getLeft() - (current - start));
-//                    lostTime = 0;
                     start = current;
                 }
+                // Task finished
                 if(task != null) {
-                    System.out.println("Task " + task.getId() + " finished at " + Timer.getTimeDouble() + " with priority " + task.getPriority());
                     task.finish();
                     task = null;
                 }
@@ -68,7 +66,7 @@ public class MyHost extends Host {
         for(Task task : queue) {
             workLeft += task.getLeft();
         }
-        return (workLeft + (task != null ? task.getLeft() : 0) + lostTime);
+        return (workLeft + (task != null ? task.getLeft() : 0));
     }
 
     @Override
